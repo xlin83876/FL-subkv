@@ -231,7 +231,7 @@ export default {
             9: { primaryColor: '#6366f1', hoverColor: '#4f46e5', bgColor: '#eef2ff', cardBg: '#e0e7ff', gradientColor: 'rgba(99,102,241, 0.8)', qrColor: '#6366f1' },
             10: { primaryColor: '#14b8a6', hoverColor: '#0d9488', bgColor: '#f0fdfa', cardBg: '#ccfbf1', gradientColor: 'rgba(20,184,166, 0.8)', qrColor: '#14b8a6' }
         };
-        const COLOR = Number(env.COLOR) || 1;
+        const COLOR = Number(env.COLOR) || 3;
         const theme = themes[COLOR];
 
         if (env.TOKEN) 快速订阅访问入口 = await 整理(env.TOKEN);
