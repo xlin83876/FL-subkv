@@ -617,11 +617,23 @@ function parseVlessUrl(url) {
 function extractUUID(text) {
     if (!text) return null;
     const trimmedText = text.trim();
-    const match = trimmedText.match(/uuid=([a-fA-F0-9\-]{36})/);
+    try {
+        const jsonObject = JSON.parse(trimmedText);
+        if (jsonObject && typeof jsonObject.uuid === 'string') {
+            if (/^[a-fA-F0-9\-]{36}$/.test(jsonObject.uuid)) {
+                console.log("成功从JSON中提取UUID。");
+                return jsonObject.uuid;
+            }
+        }
+    } catch (e) {
+        
+    }
+    console.log("尝试按纯文本格式解析UUID...");
+    const match = trimmedText.match(/^(?:uuid|password)=(.+)/);
     if (match && match[1]) {
         return match[1];
     }
-    if (/^[a-fA-F0-9\-]{36}$/.test(trimmedText)) {
+    if (trimmedText.length > 0) {
         return trimmedText;
     }
     return null;
