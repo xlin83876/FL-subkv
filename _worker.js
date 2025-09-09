@@ -11,7 +11,7 @@ let remarkIndex = 1; //CSV备注所在列偏移量
 let subConverter = 'SUBAPI.cmliussss.net';
 let subConfig = atob('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2NtbGl1L0FDTDRTU1IvbWFpbi9DbGFzaC9jb25maWcvQUNMNFNTUl9PbmxpbmVfRnVsbF9NdWx0aU1vZGUuaW5p');
 let EndPS = '【极链】';
-let FileName = '极链优选订阅器';
+let FileName = '极链订阅生成器';
 let alpn = 'h3';
 const regex = /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[.*\]):?(\d+)?#?(.*)?$/;
 let fakeUserID;
@@ -19,13 +19,58 @@ let fakeHostName;
 let httpsPorts = ["2053", "2083", "2087", "2096", "8443"];
 let 网络备案 = `提供维护: <a href='https://t.me/jiliankeji'>极链科技</a>,想你所想: <a href='https://t.me/jilianso'>资源搜索</a>`; //写你自己的维护者广告
 let 网站图标, 网站头像, 网站背景;
-async function getNextNode(env) {
-    const fallbackNode = {
-        host: 'your-fallback-host.com',
-        uuid: 'your-fallback-uuid-0000-0000-0000-000000000000'
-    };
 
-    // 1. 优先从 KV 读取 (轮询模式)
+async function getNextNode(env) {
+    const fallbackNode = { host: 'your-fallback-host.com', uuid: 'your-fallback-uuid-...' };
+
+    if (env.SUB_LINKS) {
+        try {
+            const subLinks = await 整理(env.SUB_LINKS);
+            
+            // 【关键】使用不带任何自定义headers的、最纯净的fetch请求
+            const allNodesPromises = subLinks.map(link =>
+                fetch(link)
+                    .then(res => res.ok ? res.text() : Promise.resolve(""))
+                    .catch(() => "")
+            );
+            const allNodesTexts = await Promise.all(allNodesPromises);
+            
+            const processedTexts = allNodesTexts.map(text => {
+                if (!text || text.trim() === '') return "";
+                try { return atob(text); } catch (e) { return text; }
+            });
+
+            const combinedText = processedTexts.join('\n');
+            let allParsedNodes = [];
+            const uniqueCombinations = new Set();
+            const lines = combinedText.split(/[\r\n]+/);
+
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (trimmedLine.startsWith("vless://")) {
+                    const parsed = parseVlessUrl(trimmedLine);
+                    if (parsed) {
+                        const combination = `${parsed.host}|${parsed.uuid}`;
+                        if (!uniqueCombinations.has(combination)) {
+                            uniqueCombinations.add(combination);
+                            allParsedNodes.push(parsed);
+                        }
+                    }
+                }
+            }
+            
+            if (allParsedNodes.length > 0) {
+                const randomNode = allParsedNodes[Math.floor(Math.random() * allParsedNodes.length)];
+                console.log(`从 ${allParsedNodes.length} 个节点中成功随机选择一个。`);
+                return { ...randomNode, source: 'SUB_LINKS' };
+            }
+
+        } catch (e) {
+            console.error("从 SUB_LINKS 获取或解析节点失败, 将回退到KV:", e);
+        }
+    }
+    
+    // 2. 如果 SUB_LINKS 失败或未配置，则从 KV 读取 (轮询模式)
     if (env.KV) {
         const nodeListValue = await env.KV.get('NODE_CONFIG_LIST');
         if (nodeListValue) {
@@ -34,14 +79,13 @@ async function getNextNode(env) {
                 if (Array.isArray(nodes) && nodes.length > 0) {
                     let currentIndex = await env.KV.get('node_index');
                     currentIndex = currentIndex ? parseInt(currentIndex) : 0;
-                    if (currentIndex >= nodes.length) {
-                        currentIndex = 0;
-                    }
+                    if (currentIndex >= nodes.length) currentIndex = 0;
+                    
                     const nextNode = nodes[currentIndex];
                     await env.KV.put('node_index', (currentIndex + 1).toString());
                     if (nextNode && nextNode.host && nextNode.uuid) {
                         console.log("获取节点来源: KV");
-                        return nextNode;
+                        return { ...nextNode, source: 'KV' }; // 增加 source 标识
                     }
                 }
             } catch (e) {
@@ -50,18 +94,18 @@ async function getNextNode(env) {
         }
     }
 
-    // 2. 如果 KV 失败，则检查环境变量 (混合模式)
+    // 3. 如果 KV 失败，则检查环境变量 (混合模式)
     if (env.HOST || env.UUID) {
         console.log("获取节点来源: 环境变量 + 备用值组合");
         const hostValue = env.HOST ? await 整理(env.HOST) : [fallbackNode.host];
         const host = hostValue[Math.floor(Math.random() * hostValue.length)];
         const uuid = env.UUID || env.PASSWORD || fallbackNode.uuid;
-        return { host: host, uuid: uuid };
+        return { host, uuid, source: 'ENV' }; // 增加 source 标识
     }
 
-    // 3. 如果以上都没有，返回完全写死的备用值
+    // 4. 如果以上都没有，返回完全写死的备用值
     console.log("获取节点来源: 代码写死备用值");
-    return fallbackNode;
+    return { ...fallbackNode, source: 'FALLBACK' }; // 增加 source 标识
 }
 
 async function 整理优选列表(api) {
@@ -187,7 +231,7 @@ export default {
             9: { primaryColor: '#6366f1', hoverColor: '#4f46e5', bgColor: '#eef2ff', cardBg: '#e0e7ff', gradientColor: 'rgba(99,102,241, 0.8)', qrColor: '#6366f1' },
             10: { primaryColor: '#14b8a6', hoverColor: '#0d9488', bgColor: '#f0fdfa', cardBg: '#ccfbf1', gradientColor: 'rgba(20,184,166, 0.8)', qrColor: '#14b8a6' }
         };
-        const COLOR = Number(env.COLOR) || 3;
+        const COLOR = Number(env.COLOR) || 1;
         const theme = themes[COLOR];
 
         if (env.TOKEN) 快速订阅访问入口 = await 整理(env.TOKEN);
@@ -223,15 +267,68 @@ export default {
         DLS = Number(env.DLS) || DLS;
         remarkIndex = Number(env.CSVREMARK) || remarkIndex;
         
-        // 提取HTTP链接到API数组
         const httpRegex = /^https?:\/\//i;
         addressesapi.push(...addresses.filter(item => httpRegex.test(item)));
         addresses = addresses.filter(item => !httpRegex.test(item));
 
         if (快速订阅访问入口.some(token => url.pathname.includes(token))) {
+            let dynamicUUID = null;
+            let uuidSource = '';
+        
+            // 步骤1: 检查和获取动态UUID
+            if (env.UUIDAPI) {
+                try {
+                    const response = await fetch(env.UUIDAPI);
+                    if (response.ok) {
+                        const text = await response.text();
+                        dynamicUUID = extractUUID(text);
+                        if (dynamicUUID) {
+                            uuidSource = 'UUIDAPI';
+                            console.log(`成功从 UUIDAPI 获取到UUID: ${dynamicUUID}`);
+                        }
+                    }
+                } catch (e) {
+                    console.error("请求 UUIDAPI 失败:", e);
+                }
+            }
+        
+            // 步骤2: 获取节点信息 (主要是host)
             const node = await getNextNode(env);
+            if (!node || !node.host) { // 注意：现在我们不强求node.uuid了
+                return new Response("Failed to get a valid node host from SUB_LINKS or fallbacks.", { status: 500 });
+            }
+        
+            // 步骤3: 决定最终的 host 和 uuid
             host = node.host;
-            uuid = node.uuid;
+            uuid = dynamicUUID ? dynamicUUID : node.uuid; // 优先使用 dynamicUUID
+        
+            if (!uuid) {
+                return new Response("Failed to determine a valid UUID.", { status: 500 });
+            }
+        
+            // 步骤4: 判断是否添加倒计时节点
+            if (uuidSource === 'UUIDAPI' || node.source === 'SUB_LINKS') {
+                // 默认倒计时为24小时 (86400秒)
+                let countdownSeconds = 86400; 
+            
+                // 检查并使用自定义的 UUIDTIME (单位: 秒)
+                if (env.UUIDTIME) {
+                    const userSeconds = parseInt(env.UUIDTIME, 10);
+                    if (!isNaN(userSeconds) && userSeconds > 0) {
+                        countdownSeconds = userSeconds;
+                        console.log(`使用自定义倒计时: ${countdownSeconds} 秒。`);
+                    }
+                }
+            
+                const expiryTime = getBeijingTime(countdownSeconds);
+                const countdownNode = `skk.moe:443#到期日: ${expiryTime}`;
+                const instructionNode = `malaysia.com:443#到期更新订阅即可`;
+                addresses.unshift(instructionNode);
+                addresses.unshift(countdownNode);
+                console.log("已添加倒计时节点。");
+            }
+        
+            
             path = env.PATH || "/?ed=2560";
             sni = env.SNI || host;
             type = env.TYPE || type;
@@ -478,4 +575,54 @@ async function subHtml(request, theme) {
     </body>
     </html>`;
     return new Response(HTML, { headers: { "content-type": "text/html;charset=UTF-8" } });
+}
+
+function getBeijingTime(secondsToAdd = 0) {
+    const now = new Date();
+
+    now.setSeconds(now.getSeconds() + secondsToAdd);
+
+    const formatter = new Intl.DateTimeFormat('zh-CN', {
+        timeZone: 'Asia/Shanghai',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    const parts = formatter.formatToParts(now).reduce((acc, part) => {
+        acc[part.type] = part.value;
+        return acc;
+    }, {});
+
+    return `${parts.year}/${parts.month}/${parts.day} ${parts.hour}:${parts.minute}`;
+}
+
+function parseVlessUrl(url) {
+    try {
+        const urlObject = new URL(url);
+        const uuid = urlObject.username;
+        const host = urlObject.searchParams.get('host') || urlObject.hostname;
+
+        if (uuid && host) {
+            return { host, uuid };
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+function extractUUID(text) {
+    if (!text) return null;
+    const trimmedText = text.trim();
+    const match = trimmedText.match(/uuid=([a-fA-F0-9\-]{36})/);
+    if (match && match[1]) {
+        return match[1];
+    }
+    if (/^[a-fA-F0-9\-]{36}$/.test(trimmedText)) {
+        return trimmedText;
+    }
+    return null;
 }
