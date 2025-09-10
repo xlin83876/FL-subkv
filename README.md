@@ -21,7 +21,7 @@
 | COLOR | `1-10` | 不同颜色主题 |
 | KV | `绑定KV空间` | KV空间键入NODE_CONFIG_LIST，存储HOST，UUID 变量|
 | UUIDAPI | `生成UUID的链接` | 用API里的UUID作用到订阅里 |
-| UUIDTIME | `有效时间，24小时=86400秒` | 给UUID设置有效的时间，搭配UUIDAPI，当设置此项，订阅节点第一个为到期时间提示 |
+| UUIDTIME | `有效时间，24小时=86400秒` | 给UUID设置有效的时间，搭配UUIDAPI，当设置此项，订阅节点第一个为到期时间提示，假的时间，真的时间必须与vless的时间相同 |
 | SUB_LINKS | `订阅链接` | 直接提取订阅内节点的host和uuid |
 ----
 
