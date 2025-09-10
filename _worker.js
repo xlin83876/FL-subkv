@@ -10,7 +10,7 @@ let DLS = 5000;
 let remarkIndex = 1; //CSV备注所在列偏移量
 let subConverter = 'SUBAPI.cmliussss.net';
 let subConfig = atob('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2NtbGl1L0FDTDRTU1IvbWFpbi9DbGFzaC9jb25maWcvQUNMNFNTUl9PbmxpbmVfRnVsbF9NdWx0aU1vZGUuaW5p');
-let EndPS = '【极链】';
+let EndPS = '';
 let FileName = '极链订阅生成器';
 let alpn = 'h3';
 const regex = /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[.*\]):?(\d+)?#?(.*)?$/;
@@ -274,6 +274,13 @@ export default {
         if (快速订阅访问入口.some(token => url.pathname.includes(token))) {
             let dynamicUUID = null;
             let uuidSource = '';
+            let countdownSeconds = 0; // 默认值为0，表示不启用
+            if (env.UUIDTIME) {
+                const userSeconds = parseInt(env.UUIDTIME, 10);
+                if (!isNaN(userSeconds) && userSeconds > 0) {
+                    countdownSeconds = userSeconds; // 只有有效时才赋值
+                }
+            }
         
             // 步骤1: 检查和获取动态UUID
             if (env.UUIDAPI) {
@@ -307,27 +314,14 @@ export default {
             }
         
             // 步骤4: 判断是否添加倒计时节点
-            if (uuidSource === 'UUIDAPI' || node.source === 'SUB_LINKS') {
-                // 默认倒计时为24小时 (86400秒)
-                let countdownSeconds = 86400; 
-            
-                // 检查并使用自定义的 UUIDTIME (单位: 秒)
-                if (env.UUIDTIME) {
-                    const userSeconds = parseInt(env.UUIDTIME, 10);
-                    if (!isNaN(userSeconds) && userSeconds > 0) {
-                        countdownSeconds = userSeconds;
-                        console.log(`使用自定义倒计时: ${countdownSeconds} 秒。`);
-                    }
-                }
-            
+            if (countdownSeconds > 0) { // 新的触发条件
                 const expiryTime = getBeijingTime(countdownSeconds);
                 const countdownNode = `skk.moe:443#到期日: ${expiryTime}`;
                 const instructionNode = `malaysia.com:443#到期更新订阅即可`;
                 addresses.unshift(instructionNode);
                 addresses.unshift(countdownNode);
-                console.log("已添加倒计时节点。");
+                console.log(`已添加倒计时节点，时长: ${countdownSeconds} 秒。`);
             }
-        
             
             path = env.PATH || "/?ed=2560";
             sni = env.SNI || host;
@@ -617,9 +611,11 @@ function parseVlessUrl(url) {
 function extractUUID(text) {
     if (!text) return null;
     const trimmedText = text.trim();
+
     try {
         const jsonObject = JSON.parse(trimmedText);
         if (jsonObject && typeof jsonObject.uuid === 'string') {
+            // 验证一下取出的值是不是合法的UUID格式
             if (/^[a-fA-F0-9\-]{36}$/.test(jsonObject.uuid)) {
                 console.log("成功从JSON中提取UUID。");
                 return jsonObject.uuid;
@@ -628,13 +624,17 @@ function extractUUID(text) {
     } catch (e) {
         
     }
+
     console.log("尝试按纯文本格式解析UUID...");
+    
     const match = trimmedText.match(/^(?:uuid|password)=(.+)/);
     if (match && match[1]) {
         return match[1];
     }
+
     if (trimmedText.length > 0) {
         return trimmedText;
     }
+
     return null;
 }
