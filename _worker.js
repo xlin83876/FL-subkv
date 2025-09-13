@@ -83,7 +83,7 @@ async function getNextNode(env) {
                     
                     const nextNode = nodes[currentIndex];
                     await env.KV.put('node_index', (currentIndex + 1).toString());
-                    if (nextNode && nextNode.host && nextNode.uuid) {
+                    if (nextNode && nextNode.host && (nextNode.uuid || nextNode.password)) {
                         console.log("获取节点来源: KV");
                         return { ...nextNode, source: 'KV' }; // 增加 source 标识
                     }
@@ -246,7 +246,7 @@ export default {
             const imgs = await 整理(env.IMG);
             网站背景 = `background-image: url('${imgs[Math.floor(Math.random() * imgs.length)]}');`;
         } else {
-            网站背景 = 'background-image: url("https://img.hgd.f5.si/random?type=img&dir=T1");';
+            网站背景 = 'background-image: url("https://img.hgd.f5.si/random?type=img&dir=T3");';
         }
         网络备案 = env.BEIAN || env.BY || 网络备案;
 
@@ -307,7 +307,8 @@ export default {
         
             // 步骤3: 决定最终的 host 和 uuid
             host = node.host;
-            uuid = dynamicUUID ? dynamicUUID : node.uuid; // 优先使用 dynamicUUID
+            const useTrojan = env.PASSWORD || node.password;
+            uuid = dynamicUUID || env.PASSWORD || node.password || node.uuid;
         
             if (!uuid) {
                 return new Response("Failed to determine a valid UUID.", { status: 500 });
@@ -327,10 +328,11 @@ export default {
             sni = env.SNI || host;
             type = env.TYPE || type;
             alpn = env.ALPN || alpn;
-            if (env.PASSWORD) {
-                协议类型 = atob('VHJvamFu');
+
+            if (useTrojan) {
+               协议类型 = atob('VHJvamFu');
             } else {
-                协议类型 = atob('VkxFU1M=');
+               协议类型 = atob('VkxFU1M=');
             }
         } else {
             host = url.searchParams.get('host');
@@ -609,32 +611,30 @@ function parseVlessUrl(url) {
     }
 }
 function extractUUID(text) {
-    if (!text) return null;
-    const trimmedText = text.trim();
+  if (!text) return null;
+  const trimmedText = text.trim();
+  
+  try {
+      const jsonObject = JSON.parse(trimmedText);
+      if (jsonObject && typeof jsonObject.uuid === 'string') {
+          if (/[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/.test(jsonObject.uuid)) {
+              console.log("成功从JSON中提取UUID。");
+              return jsonObject.uuid;
+          }
+      }
+  } catch (e) {
+      // 不是JSON，继续
+  }
 
-    try {
-        const jsonObject = JSON.parse(trimmedText);
-        if (jsonObject && typeof jsonObject.uuid === 'string') {
-            // 验证一下取出的值是不是合法的UUID格式
-            if (/^[a-fA-F0-9\-]{36}$/.test(jsonObject.uuid)) {
-                console.log("成功从JSON中提取UUID。");
-                return jsonObject.uuid;
-            }
-        }
-    } catch (e) {
-        
-    }
-
-    console.log("尝试按纯文本格式解析UUID...");
-    
-    const match = trimmedText.match(/^(?:uuid|password)=(.+)/);
-    if (match && match[1]) {
-        return match[1];
-    }
-
-    if (trimmedText.length > 0) {
-        return trimmedText;
-    }
-
-    return null;
+  const smartMatch = trimmedText.match(/(?:uuid|password)[\s:=]+([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})/i);
+  if (smartMatch && smartMatch[1]) {
+      console.log("成功通过正则表达式从文本中提取UUID。");
+      return smartMatch[1];
+  }
+  if (/^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$/i.test(trimmedText)) {
+      console.log("成功将整个纯文本识别为UUID。");
+      return trimmedText;
+  }
+  console.log("在文本中未找到任何有效的UUID格式。");
+  return null;
 }
