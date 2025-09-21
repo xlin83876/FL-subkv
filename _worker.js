@@ -1,4 +1,4 @@
-let 快速订阅访问入口 = ['PStSUB'];
+let 快速订阅访问入口 = ['JLsting678fjkdvbn'];
 let addresses = [
 'fast-10010.asuscomm.com:443#免费订阅谨防受骗',
 'bestcf.030101.xyz:443#勿外传且用且珍惜',
