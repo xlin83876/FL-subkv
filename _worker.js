@@ -244,7 +244,14 @@ export default {
             if (cfPortsSource) httpsPorts = await 整理(cfPortsSource);
 
             // Process appearance configs
-            const COLOR = Number(kvColor || env.COLOR) || 1;
+            let finalColor = 1; // 默认值
+            if (env.COLOR) {
+                finalColor = Number(env.COLOR);
+            }
+            if (kvColor) {
+                finalColor = Number(kvColor); // KV (优先级最高)
+            }
+            const COLOR = finalColor || 1; // 最后再做一次校验，防止 NaN
             theme = themes[COLOR];
             const icoSource = kvIco || env.ICO;
             网站图标 = icoSource ? `<link rel="icon" sizes="32x32" href="${icoSource}">` : '<link rel="icon" sizes="32x32" href="https://api.jzhou.dedyn.io/极.png?token=JLiptq">';
