@@ -12,6 +12,9 @@
 | PATH | `/?ed=2560` | 快速订阅内置节点的路径信息 | 
 | ADD | `icook.tw:2053#官方优选域名` | 对应`addresses`字段 （支持多元素, 元素之间使用`,`或`换行`作间隔） | 
 | ADDAPI | [https://raw.github.../addressesapi.txt](https://raw.githubusercontent.com/cmliu/WorkerVless2sub/main/addressesapi.txt) | 对应`addressesapi`字段 （支持多元素, 元素之间使用`,`或`换行`作间隔） |  
+| STYLE | `code或rich默认rich` | code为国家代码如:HK，rich为中文名如:🇭🇰香港1 |
+| PREFIX | `节点前缀名` | 给节点加前缀名如：【极链】HK |
+| SUFFIX | `节点后缀名` | 给节点加后缀名如：HK【极链】 |
 | ADDCSV | [https://raw.github.../addressescsv.csv](https://raw.githubusercontent.com/cmliu/WorkerVless2sub/main/addressescsv.csv) | 对应`addressescsv`字段 （支持多元素, 元素之间使用`,`或`换行`作间隔） | 
 | DLS | `5000` |`addressescsv`测速结果满足速度下限 | 
 | SUBAPI | `subapi.cmliussss.net` | clash、singbox等 订阅转换后端 | 
