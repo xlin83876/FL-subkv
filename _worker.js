@@ -119,7 +119,7 @@ async function 整理优选列表(api, env) {
     const sortedKeywords = Object.keys(allKeywords).sort((a, b) => b.length - a.length);
     // 1. 手动设置 (最低优先级)
     let prefix = ''; // 可在此手动设置默认前缀, 如 '[极链]'
-    let suffix = '@jiliankeji'; // 可在此手动设置默认后缀, 如 '-V2'
+    let suffix = '【极链】'; // 可在此手动设置默认后缀, 如 '-V2'
 
     // 2. 从环境变量覆盖 (中等优先级)
     if (env && env.PREFIX !== undefined) prefix = env.PREFIX;
