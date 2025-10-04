@@ -1,4 +1,4 @@
-let 快速订阅访问入口 = ['JLsting678fjkdvbn'];
+let 快速订阅访问入口 = ['PStSUB'];
 let addresses = [
 'fast-10010.asuscomm.com:443#免费订阅谨防受骗',
 'bestcf.030101.xyz:443#勿外传且用且珍惜',
@@ -10,8 +10,8 @@ let DLS = 5000;
 let remarkIndex = 1; //CSV备注所在列偏移量
 let subConverter = 'SUBAPI.cmliussss.net';
 let subConfig = atob('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2NtbGl1L0FDTDRTU1IvbWFpbi9DbGFzaC9jb25maWcvQUNMNFNTUl9PbmxpbmVfRnVsbF9NdWx0aU1vZGUuaW5p');
-let EndPS = '【极链】';
-let FileName = '极链优选订阅器';
+let EndPS = '';
+let FileName = '极链订阅生成器';
 let alpn = 'h3';
 const regex = /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[.*\]):?(\d+)?#?(.*)?$/;
 let fakeUserID;
@@ -96,50 +96,116 @@ async function getNextNode(env) {
     return { node: fallbackNode, source: finalSource };
 }
 
-async function 整理优选列表(api) {
-    if (!api || api.length === 0) return [];
-    let newapi = "";
+async function 整理优选列表(api, env) {
+    if (!api || !Array.isArray(api) || api.length === 0) return [];
+
+    const CUSTOM_KEYWORDS = {
+      '天诚': 'HK',
+      '官方': 'HK',
+      '发布': 'HK',
+    };
+    const COUNTRY_MAPPING = {
+        "香港": "HK", "澳门": "MO", "台湾": "TW", "中国": "CN", "大陆": "CN", "日本": "JP", "韩国": "KR", "新加坡": "SG", "马来西亚": "MY", "泰国": "TH", "缅甸": "MM", "越南": "VN", "菲律宾": "PH", "印度尼西亚": "ID", "印度": "IN", "土耳其": "TR", "阿联酋": "AE", "沙特": "SA", "亚美尼亚": "AM", "伊朗": "IR", "柬埔寨": "KH", "吉尔吉斯斯坦": "KG", "哈萨克斯坦": "KZ", "以色列": "IL", "英国": "GB", "法国": "FR", "德国": "DE", "荷兰": "NL", "瑞士": "CH", "俄罗斯": "RU", "白俄罗斯": "BY", "乌克兰": "UA", "意大利": "IT", "西班牙": "ES", "葡萄牙": "PT", "瑞典": "SE", "挪威": "NO", "罗马尼亚": "RO", "丹麦": "DK", "芬兰": "FI", "爱尔兰": "IE", "比利时": "BE", "奥地利": "AT", "波兰": "PL", "捷克": "CZ", "立陶宛": "LT", "匈牙利": "HU", "希腊": "GR", "保加利亚": "BG", "爱沙尼亚": "EE", "拉脱维亚": "LV", "阿尔巴尼亚": "AL", "塞浦路斯": "CY", "格鲁吉亚": "GE", "克罗地亚": "HR", "冰岛": "IS", "列支敦士登": "LI", "摩尔多瓦": "MD", "黑山": "ME", "北马其顿": "MK", "塞尔维亚": "RS", "斯洛文尼亚": "SI", "斯洛伐克": "SK", "美国": "US", "加拿大": "CA", "墨西哥": "MX", "巴西": "BR", "阿根廷": "AR", "智利": "CL", "哥伦比亚": "CO", "澳大利亚": "AU", "新西兰": "NZ", "南非": "ZA", "埃及": "EG", "肯尼亚": "KE", "毛里求斯": "MU", "塞舌尔": "SC", "乌兹别克斯坦": "UZ"
+    };
+    const CODE_TO_NAME = Object.fromEntries(Object.entries(COUNTRY_MAPPING).map(([name, code]) => [code, name]));
+    const CODE_TO_FLAG = {
+        "HK": "🇭🇰", "MO": "🇲🇴", "TW": "🇹🇼", "CN": "🇨🇳", "JP": "🇯🇵", "KR": "🇰🇷", "SG": "🇸🇬", "MY": "🇲🇾", "TH": "🇹🇭", "MM": "🇲🇲", "VN": "🇻🇳", "PH": "🇵🇭", "ID": "🇮🇩", "IN": "🇮🇳", "TR": "🇹🇷", "AE": "🇦🇪", "SA": "🇸🇦", "AM": "🇦🇲", "IR": "🇮🇷", "KH": "🇰🇭", "KG": "🇰🇬", "KZ": "🇰🇿", "IL": "🇮🇱", "GB": "🇬🇧", "FR": "🇫🇷", "DE": "🇩🇪", "NL": "🇳🇱", "CH": "🇨🇭", "RU": "🇷🇺", "BY": "🇧🇾", "UA": "🇺🇦", "IT": "🇮🇹", "ES": "🇪🇸", "PT": "🇵🇹", "SE": "🇸🇪", "NO": "🇳🇴", "RO": "🇷🇴", "DK": "🇩🇰", "FI": "🇫🇮", "IE": "🇮🇪", "BE": "🇧🇪", "AT": "🇦🇹", "PL": "🇵🇱", "CZ": "🇨🇿", "LT": "🇱🇹", "HU": "🇭🇺", "GR": "🇬🇷", "BG": "🇧🇬", "EE": "🇪🇪", "LV": "🇱🇻", "AL": "🇦🇱", "CY": "🇨🇾", "GE": "🇬🇪", "HR": "🇭🇷", "IS": "🇮🇸", "LI": "🇱🇮", "MD": "🇲🇩", "ME": "🇲🇪", "MK": "🇲🇰", "RS": "🇷🇸", "SI": "🇸🇮", "SK": "🇸🇰", "US": "🇺🇸", "CA": "🇨🇦", "MX": "🇲🇽", "BR": "🇧🇷", "AR": "🇦🇷", "CL": "🇨🇱", "CO": "🇨🇴", "AU": "🇦🇺", "NZ": "🇳🇿", "ZA": "🇿🇦", "EG": "🇪🇬", "KE": "🇰🇪", "MU": "🇲🇺", "SC": "🇸🇨", "UZ": "🇺🇿", "UNKNOWN": "❓"
+    };
+    const LOCATION_TO_CODE = {
+        'hkg': 'HK', 'hong kong': 'HK', 'mfm': 'MO', 'macau': 'MO', 'tpe': 'TW', 'taipei': 'TW', 'khh': 'TW', 'kaohsiung': 'TW', 'kaohsiung city': 'TW', 'pek': 'CN', 'beijing': 'CN', 'pvg': 'CN', 'shanghai': 'CN', 'szx': 'CN', 'shenzhen': 'CN', 'can': 'CN', 'guangzhou': 'CN', 'nrt': 'JP', 'hnd': 'JP', 'tokyo': 'JP', 'kix': 'JP', 'osaka': 'JP', 'fuk': 'JP', 'fukuoka': 'JP', 'icn': 'KR', 'seoul': 'KR', 'sin': 'SG', 'singapore': 'SG', 'kul': 'MY', 'kuala lumpur': 'MY', 'bkk': 'TH', 'bangkok': 'TH', 'han': 'VN', 'hanoi': 'VN', 'sgn': 'VN', 'ho chi minh city': 'VN', 'mnl': 'PH', 'manila': 'PH', 'cgk': 'ID', 'jakarta': 'ID', 'bom': 'IN', 'mumbai': 'IN', 'del': 'IN', 'delhi': 'IN', 'ist': 'TR', 'istanbul': 'TR', 'dxb': 'AE', 'dubai': 'AE', 'ruh': 'SA', 'riyadh': 'SA', 'evn': 'AM', 'yerevan': 'AM', 'lhr': 'GB', 'london': 'GB', 'man': 'GB', 'manchester': 'GB', 'cdg': 'FR', 'paris': 'FR', 'mrs': 'FR', 'marseille': 'FR', 'fra': 'DE', 'frankfurt': 'DE', 'muc': 'DE', 'munich': 'DE', 'ber': 'DE', 'berlin': 'DE', 'dus': 'DE', 'düsseldorf': 'DE', 'ham': 'DE', 'hamburg': 'DE', 'txl': 'DE', 'ams': 'NL', 'amsterdam': 'NL', 'zrh': 'CH', 'zurich': 'CH', 'svo': 'RU', 'moscow': 'RU', 'dme': 'RU', 'led': 'RU', 'saint petersburg': 'RU', 'kbp': 'UA', 'kyiv': 'UA', 'fco': 'IT', 'rome': 'IT', 'mxp': 'IT', 'milan': 'IT', 'mad': 'ES', 'madrid': 'ES', 'bcn': 'ES', 'barcelona': 'ES', 'lis': 'PT', 'lisbon': 'PT', 'arn': 'SE', 'stockholm': 'SE', 'osl': 'NO', 'oslo': 'NO', 'otp': 'RO', 'bucharest': 'RO', 'cph': 'DK', 'copenhagen': 'DK', 'hel': 'FI', 'helsinki': 'FI', 'dub': 'IE', 'dublin': 'IE', 'bru': 'BE', 'brussels': 'BE', 'vie': 'AT', 'vienna': 'AT', 'waw': 'PL', 'warsaw': 'PL', 'prg': 'CZ', 'prague': 'CZ', 'vno': 'LT', 'vilnius': 'LT', 'bud': 'HU', 'budapest': 'HU', 'ath': 'GR', 'athens': 'GR', 'sof': 'BG', 'sofia': 'BG', 'tll': 'EE', 'tallinn': 'EE', 'rix': 'LV', 'riga': 'LV', 'sjc': 'US', 'san jose': 'US', 'lax': 'US', 'los angeles': 'US', 'sfo': 'US', 'san francisco': 'US', 'sea': 'US', 'seattle': 'US', 'pdx': 'US', 'portland': 'US', 'phx': 'US', 'phoenix': 'US', 'den': 'US', 'denver': 'US', 'ord': 'US', 'chicago': 'US', 'dfw': 'US', 'dallas': 'US', 'jfk': 'US', 'new york': 'US', 'ewr': 'US', 'newark': 'US', 'iad': 'US', 'ashburn': 'US', 'washington': 'US', 'atl': 'US', 'atlanta': 'US', 'mia': 'US', 'miami': 'US', 'buf': 'US', 'buffalo': 'US', 'yyz': 'CA', 'toronto': 'CA', 'yvr': 'CA', 'vancouver': 'CA', 'yul': 'CA', 'montreal': 'CA', 'mex': 'MX', 'mexico city': 'MX', 'gru': 'BR', 'sao paulo': 'BR', 'eze': 'AR', 'buenos aires': 'AR', 'scl': 'CL', 'santiago': 'CL', 'syd': 'AU', 'sydney': 'AU', 'mel': 'AU', 'melbourne': 'AU', 'akl': 'NZ', 'auckland': 'NZ', 'jnb': 'ZA', 'johannesburg': 'ZA', 'cai': 'EG', 'cairo': 'EG'
+    };
+
+    const allKeywords = { ...LOCATION_TO_CODE, ...CUSTOM_KEYWORDS };
+    const sortedKeywords = Object.keys(allKeywords).sort((a, b) => b.length - a.length);
+    // 1. 手动设置 (最低优先级)
+    let prefix = ''; // 可在此手动设置默认前缀, 如 '[极链]'
+    let suffix = '@jiliankeji'; // 可在此手动设置默认后缀, 如 '-V2'
+
+    // 2. 从环境变量覆盖 (中等优先级)
+    if (env && env.PREFIX !== undefined) prefix = env.PREFIX;
+    if (env && env.SUFFIX !== undefined) suffix = env.SUFFIX;
+
+    // 3. 从 KV 覆盖 (最高优先级)
+    if (env && env.KV) {
+    const kvPrefix = await env.KV.get('PREFIX');
+    if (kvPrefix !== null) prefix = kvPrefix; // null 表示 KV 中不存在该键
+
+    const kvSuffix = await env.KV.get('SUFFIX');
+    if (kvSuffix !== null) suffix = kvSuffix;
+    }
+
+    function getCodeFromRemark(remark) {
+        if (!remark) return "UNKNOWN";
+        const lowerRemark = remark.toLowerCase();
+        for (const keyword of sortedKeywords) {
+            if (lowerRemark.includes(keyword.toLowerCase())) { return allKeywords[keyword]; }
+        }
+        const upperRemark = remark.toUpperCase();
+        if (CODE_TO_NAME[upperRemark]) { return upperRemark; }
+        for (const [name, code] of Object.entries(COUNTRY_MAPPING)) {
+            if (remark.includes(name)) { return code; }
+        }
+        return "UNKNOWN";
+    }
+
+    let allLines = "";
     const controller = new AbortController();
     const timeout = setTimeout(() => { controller.abort(); }, 2000);
 
     try {
         const responses = await Promise.allSettled(api.map(apiUrl => fetch(apiUrl, {
             method: 'get',
-            headers: {
-                'Accept': 'text/html,application/xhtml+xml,application/xml;',
-                'User-Agent': FileName + atob('IGNtbGl1L1dvcmtlclZsZXNzMnN1Yg==')
-            },
+            headers: { 'Accept': 'text/html,application/xhtml+xml,application/xml;', 'User-Agent': FileName + atob('IGNtbGl1L1dvcmtlclZsZXNzMnN1Yg==') },
             signal: controller.signal
         }).then(response => response.ok ? response.text() : Promise.reject())));
 
-        for (const [index, response] of responses.entries()) {
-            if (response.status === 'fulfilled') {
-                const content = await response.value;
-                const lines = content.split(/\r?\n/);
-                let 节点备注 = '';
-                let 测速端口 = '443';
-
-                if (lines[0].split(',').length > 3) { // Simple CSV check
-                    const idMatch = api[index].match(/id=([^&]*)/);
-                    if (idMatch) 节点备注 = idMatch[1];
-                    const portMatch = api[index].match(/port=([^&]*)/);
-                    if (portMatch) 测速端口 = portMatch[1];
-                    for (let i = 1; i < lines.length; i++) {
-                        const columns = lines[i].split(',')[0];
-                        if (columns) newapi += `${columns}:${测速端口}${节点备注 ? `#${节点备注}` : ''}\n`;
-                    }
-                } else {
-                    newapi += content + '\n';
-                }
+        for (const response of responses) {
+            if (response.status === 'fulfilled' && response.value) {
+                allLines += response.value + '\n';
             }
         }
-    } catch (error) {
-        console.error(error);
-    } finally {
-        clearTimeout(timeout);
-    }
+    } catch (error) { console.error(error); } finally { clearTimeout(timeout); }
 
-    return await 整理(newapi);
+    const lines = allLines.trim().split(/\r?\n/);
+    if (lines.length === 0) return [];
+    
+    // 从环境变量中获取输出格式，现在 env 是可访问的
+    let styleSource;
+    if (env && env.KV) { styleSource = await env.KV.get('STYLE') || env.STYLE; }
+    else if (env) { styleSource = env.STYLE; }
+    const outputStyle = (styleSource && styleSource.toLowerCase() === 'code') ? 'code' : 'rich';
+
+    const countryCounts = {};
+    const finalNodes = [];
+
+    for (const line of lines) {
+        if (!line.trim()) continue;
+        
+        const parts = line.split('#');
+        const addressPart = parts[0].trim();
+        const originalRemark = parts.length > 1 ? parts.slice(1).join('#').trim() : (addressPart || " ");
+
+        const code = getCodeFromRemark(originalRemark);
+        let finalRemark = originalRemark;
+        
+        if (code !== "UNKNOWN") {
+            if (outputStyle === 'rich') {
+                countryCounts[code] = (countryCounts[code] || 0) + 1;
+                const count = countryCounts[code];
+                const flag = CODE_TO_FLAG[code] || '❓';
+                const name = CODE_TO_NAME[code] || code;
+                finalRemark = `${flag}${name}${count}`;
+            } else {
+                finalRemark = code;
+            }
+        }
+        
+        if (addressPart) {
+            finalNodes.push(`${addressPart}#${prefix}${finalRemark}${suffix}`);
+        }
+    }
+    // 使用 await 整理() 是因为原始代码中它是一个 async 函数
+    return await 整理(finalNodes.join('\n'));
 }
 
 async function 整理测速结果(tls) {
@@ -500,7 +566,7 @@ export default {
         } else if (userAgent.includes('sing-box') || userAgent.includes('singbox') || format === 'singbox') {
             subConverterUrl = `https://$subConverter}/sub?target=singbox&url=${encodeURIComponent(subConverterUrl)}&insert=false&config=${encodeURIComponent(subConfig)}&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
         } else {
-            const newAddressesapi = await 整理优选列表(addressesapi);
+            const newAddressesapi = await 整理优选列表(addressesapi, env);
             const newAddressescsv = await 整理测速结果('TRUE');
             const uniqueAddresses = [...new Set(addresses.concat(newAddressesapi, newAddressescsv).filter(item => item && item.trim()))];
             const responseBody = uniqueAddresses.map(addressLine => {
@@ -828,3 +894,4 @@ async function findAvailableHostSmartly(env) {
 
   return null;
 }
+
