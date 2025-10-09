@@ -564,7 +564,7 @@ export default {
         if ((userAgent.includes('clash') || format === 'clash') && !userAgent.includes('nekobox')) {
             subConverterUrl = `https://${subConverter}/sub?target=clash&url=${encodeURIComponent(subConverterUrl)}&insert=false&config=${encodeURIComponent(subConfig)}&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
         } else if (userAgent.includes('sing-box') || userAgent.includes('singbox') || format === 'singbox') {
-            subConverterUrl = `https://$subConverter}/sub?target=singbox&url=${encodeURIComponent(subConverterUrl)}&insert=false&config=${encodeURIComponent(subConfig)}&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
+            subConverterUrl = `https://${subConverter}/sub?target=singbox&url=${encodeURIComponent(subConverterUrl)}&insert=false&config=${encodeURIComponent(subConfig)}&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
         } else {
             const newAddressesapi = await 整理优选列表(addressesapi, env);
             const newAddressescsv = await 整理测速结果('TRUE');
