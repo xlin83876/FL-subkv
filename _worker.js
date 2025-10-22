@@ -11,7 +11,7 @@ let remarkIndex = 1; //CSV备注所在列偏移量
 let subConverter = 'subapi.cmliussss.net';
 let subConfig = atob('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2NtbGl1L0FDTDRTU1IvbWFpbi9DbGFzaC9jb25maWcvQUNMNFNTUl9PbmxpbmVfRnVsbF9NdWx0aU1vZGUuaW5p');
 let EndPS = '';
-let FileName = '极链优选订阅生器';
+let FileName = '极链优选订阅器';
 let alpn = 'h3';
 const regex = /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[.*\]):?(\d+)?#?(.*)?$/;
 let fakeUserID;
