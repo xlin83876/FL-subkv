@@ -101,7 +101,7 @@ async function 整理优选列表(api, env) {
 
     const CUSTOM_KEYWORDS = {
       '天诚': 'HK',
-      '官方': 'HK',
+      'HKG': 'HK',
       '发布': 'HK',
     };
     const COUNTRY_MAPPING = {
