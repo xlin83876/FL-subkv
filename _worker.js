@@ -101,7 +101,7 @@ async function 整理优选列表(api, env) {
 
     const CUSTOM_KEYWORDS = {
       '天诚': 'HK',
-      'HKG': 'HK',
+      'CN': 'HK',
       '发布': 'HK',
     };
     const COUNTRY_MAPPING = {
@@ -180,7 +180,7 @@ async function 整理优选列表(api, env) {
 
     for (const line of lines) {
         if (!line.trim()) continue;
-        
+        if (line.includes('CN')) continue;
         const parts = line.split('#');
         const addressPart = parts[0].trim();
         const originalRemark = parts.length > 1 ? parts.slice(1).join('#').trim() : (addressPart || " ");
