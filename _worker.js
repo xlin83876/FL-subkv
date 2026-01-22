@@ -8,7 +8,7 @@ let addressesapi = [];
 let addressescsv = [];
 let DLS = 5000;
 let remarkIndex = 1; //CSV备注所在列偏移量
-let subConverter = 'subapi.cmliussss.net';
+let subConverter = 'subapi.sosoorg.com';
 let subConfig = atob('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2NtbGl1L0FDTDRTU1IvbWFpbi9DbGFzaC9jb25maWcvQUNMNFNTUl9PbmxpbmVfRnVsbF9NdWx0aU1vZGUuaW5p');
 let EndPS = '';
 let FileName = '极链优选订阅器';
@@ -547,7 +547,7 @@ export default {
                 }
                 if (countdownSeconds > 0) {
                     const expiryTime = getBeijingTime(countdownSeconds);
-                    const countdownNode = `skk.moe:443#到期日: ${expiryTime}`;
+                    const countdownNode = `saas.sin.fan:443#到期日: ${expiryTime}`;
                     const instructionNode = `malaysia.com:443#到期更新订阅即可`;
                     addresses.unshift(instructionNode);
                     addresses.unshift(countdownNode);
