@@ -425,25 +425,76 @@ export default {
             const isSubscriptionClient = userAgent.includes('clash') || userAgent.includes('sing-box') || userAgent.includes('singbox') || userAgent.includes('v2ray') || userAgent.includes('nekobox') || userAgent.includes('shadowrocket');
 
             if (isSubscriptionClient) {
-                // 来源是客户端 -> 返回提示节点
                 console.log("无效的订阅路径，UA为客户端，准备生成提示节点...");
-                const fallbackNode = { host: 'your-fallback-host.com', uuid: 'your-fallback-uuid-...' };
-                const errorHost = fallbackNode.host;
-                const errorUuid = fallbackNode.uuid;
-                const errorPath = "/?ed=2560", errorSni = errorHost, errorType = "ws", errorAlpn = "h3";
-                const error协议类型 = atob('VkxFU1M=');
                 const errorMessages = ['密码错误或已失效', '请去极链技术交流群', '获取最新链接', '群组t.me/jiliankeji'];
-                const errorAddresses = errorMessages.map(msg => `1.1.1.1:443#${msg}`);
+                const errNode = {
+                    uuid: 'a70cdc8d-d2dd-46a7-b036-babc3c06e4c6', // 随意生成的UUID
+                    host: '1.1.1.1', // 伪装Host
+                    server: '1.1.1.1', // 伪装IP
+                    path: '/?ed=2560'
+                };
 
+                if (userAgent.includes('clash') && !userAgent.includes('nekobox')) {
+                    let yamlContent = `port: 7890\nsocks-port: 7891\nallow-lan: true\nmode: rule\nlog-level: info\nexternal-controller: :9090\nproxies:\n`;
+                    
+                    errorMessages.forEach(msg => {
+                        yamlContent += `  - name: ${msg}\n    type: vless\n    server: ${errNode.server}\n    port: 443\n    uuid: ${errNode.uuid}\n    cipher: auto\n    udp: true\n    tls: true\n    skip-cert-verify: true\n    network: ws\n    servername: ${errNode.host}\n    ws-opts:\n      path: "${errNode.path}"\n      headers:\n        Host: ${errNode.host}\n\n`;
+                    });
+
+                    yamlContent += `proxy-groups:\n  - name: 🚀 节点选择\n    type: select\n    proxies:\n`;
+                    errorMessages.forEach(msg => {
+                        yamlContent += `      - ${msg}\n`;
+                    });
+
+                    return new Response(yamlContent, { 
+                        headers: { 
+                            "content-type": "text/yaml; charset=utf-8",
+                            "Profile-web-page-url": url.origin,
+                            "Content-Disposition": `attachment; filename*=utf-8''${encodeURIComponent("Error_Hint")}.yaml`
+                        } 
+                    });
+                }
+
+                if (userAgent.includes('sing-box') || userAgent.includes('singbox')) {
+                    const outbounds = [];
+                    const selector = { type: "selector", tag: "🚀 节点选择", outbounds: [] };
+                    
+                    errorMessages.forEach(msg => {
+                        outbounds.push({
+                            type: "vless",
+                            tag: msg,
+                            server: errNode.server,
+                            server_port: 443,
+                            uuid: errNode.uuid,
+                            tls: { enabled: true, server_name: errNode.host, insecure: true },
+                            transport: { type: "ws", path: errNode.path, headers: { Host: errNode.host } }
+                        });
+                        selector.outbounds.push(msg);
+                    });
+                    
+                    const singboxConfig = {
+                        log: { level: "info" },
+                        outbounds: [selector, ...outbounds, {type: "direct", tag: "direct"}]
+                    };
+
+                    return new Response(JSON.stringify(singboxConfig, null, 2), { 
+                        headers: { 
+                            "content-type": "application/json; charset=utf-8",
+                            "Profile-web-page-url": url.origin,
+                            "Content-Disposition": `attachment; filename*=utf-8''${encodeURIComponent("Error_Hint")}.json`
+                        } 
+                    });
+                }
+
+                const fallbackNode = { host: 'your-fallback-host.com', uuid: errNode.uuid };
+                const errorAddresses = errorMessages.map(msg => `1.1.1.1:443#${msg}`);
                 const responseBody = errorAddresses.map(addressLine => {
                     const address = "1.1.1.1", port = "443", addressid = addressLine.split('#')[1] || '';
-                    if (error协议类型 === atob('VHJvamFu')) {
-                        return `${atob('dHJvamFuOi8v') + errorUuid}@${address}:${port}?security=tls&sni=${errorSni}&fp=randomized&type=${errorType}&alpn=${encodeURIComponent(errorAlpn)}&host=${errorHost}&path=${encodeURIComponent(errorPath)}#${encodeURIComponent(addressid)}`;
-                    } else {
-                        return `${atob('dmxlc3M6Ly8=') + errorUuid}@${address}:${port}?encryption=none&security=tls&sni=${errorSni}&fp=random&type=${errorType}&alpn=${encodeURIComponent(errorAlpn)}&host=${errorHost}&path=${encodeURIComponent(errorPath)}#${encodeURIComponent(addressid)}`;
-                    }
+                    return `${atob('dmxlc3M6Ly8=') + fallbackNode.uuid}@${address}:${port}?encryption=none&security=tls&sni=${fallbackNode.host}&fp=random&type=ws&alpn=h3&host=${fallbackNode.host}&path=${encodeURIComponent('/?ed=2560')}#${encodeURIComponent(addressid)}`;
                 }).join('\n');
+
                 return new Response(btoa(responseBody), { headers: { "content-type": "text/plain; charset=utf-8", "Profile-web-page-url": url.origin } });
+                
             } else {
                 // 来源是浏览器 -> 返回HTML错误页面
                 const errorHtml = `
