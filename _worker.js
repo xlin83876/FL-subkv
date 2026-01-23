@@ -598,8 +598,8 @@ export default {
                 }
                 if (countdownSeconds > 0) {
                     const expiryTime = getBeijingTime(countdownSeconds);
-                    const countdownNode = `saas.sin.fan:443#到期日: ${expiryTime}`;
-                    const instructionNode = `malaysia.com:443#到期更新订阅即可`;
+                    const countdownNode = `saas.sin.fan:443#截止日: ${expiryTime}`;
+                    const instructionNode = `malaysia.com:443#失效更新订阅即可`;
                     addresses.unshift(instructionNode);
                     addresses.unshift(countdownNode);
                 }
